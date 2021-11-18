@@ -1,0 +1,71 @@
+#include <LiquidCrystal.h>
+
+const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
+LiquidCrystal lcd(rs,en,d4,d5,d6,d7);
+
+int currentsensor = A0;
+int voltagesensor = A1;
+int powersensor = A2;
+int dischargesensor = A3;
+int currentValue = 0;
+int voltageValue = 0;
+int powerValue = 0;
+int dischargeValue = 0;
+
+int dischargebutton = 7;
+int onoffbutton = 8;
+int state = HIGH;
+int previous = LOW;
+long time = 0;
+long debounce = 200;
+int state2 = HIGH;
+int previous2 = LOW;
+long time2 = 0;
+long debounce2 = 200;
+
+void setup() {
+   Serial.begin(11520);
+   lcd.begin(16,2);
+   lcd.print("Initializing Power System...");
+   pinMode(dischargebutton, INPUT);
+   pinMode(onoffbutton, INPUT);
+}
+
+void loop() {
+   int onoffpushed = digitalRead(onoffbutton);
+   if (onoffpushed == HIGH && previous == LOW && millis() - time > debounce){
+     if (state == HIGH)
+     lcd.setCursor(0,1);
+     lcd.print(millis() / 1000);
+     currentValue = analogRead(currentsensor);
+     voltageValue = analogRead(voltagesensor);
+     powerValue = analogRead(powersensor);
+     dischargeValue = analogRead(dischargesensor);
+     lcd.print("Current Value: ");
+     lcd.println(currentValue);
+     lcd.print("Voltage Value: ");
+     lcd.println(voltageValue);
+     lcd.print("Power Value: ");
+     lcd.println(powerValue);
+     state = LOW;
+      }
+   else{
+      state = HIGH;
+      time = millis();
+      }
+      previous = onoffpushed; 
+
+   int dischargepushed = digitalRead(dischargebutton);
+   if (dischargepushed == HIGH && previous2 == LOW && millis() - time2 > debounce2){
+     if (state2 == HIGH)
+     lcd.print("Discharge Value: ");
+     lcd.println(dischargeValue);
+     state2 = LOW;
+      }
+   else{
+     lcd.print("Not Discharging"); 
+     state2 = HIGH;
+     time2 = millis();
+      }
+      previous2 = dischargepushed; 
+}
