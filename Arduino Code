@@ -1,0 +1,119 @@
+#include "LiquidCrystal.h"
+
+//Voltage Sensor Variables
+//Note: There is redundancy with the resistor values but oh well
+
+int voltageSensor_1 = A8;
+const int voltageSensor_2 = A9;
+const int voltageSensor_3 = A10;
+
+float Vout_1 = 0.0;
+float Vin_1 = 0.0;
+float R1_1 = 30000.0;
+float R2_1 = 7500.0;
+int value_1 = 0;
+
+float Vout_2 = 0.0;
+float Vin_2 = 0.0;
+float R1_2 = 30000.0;
+float R2_2 = 7500.0;
+int value_2 = 0;
+
+float Vout_3 = 0.0;
+float Vin_3 = 0.0;
+float R1_3 = 30000.0;
+float R2_3 = 7500.0;
+int value_3 = 0;
+
+//Current Sensor Variables
+int currentSensor_2 = A11;
+const int currentSensor_1 = A12;
+const int currentSensor_3 = A13;
+
+//Base Values for all sensors
+float sensitivity = 66;
+float adcValue = 0;
+float offsetVoltage = 2500;
+float adcVoltage = 0;
+
+//Current Sensor Specific Values
+float currentValue_1 = 0;
+float currentValue_2 = 0;
+float currentValue_3 = 0;
+
+
+LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
+
+void setup() 
+{
+  lcd.begin(16,2);
+  lcd.print(" Measuring Voltage ");
+  delay(2000);
+  Serial.begin(9600);
+}
+
+void loop() 
+{
+  lcd.setCursor(0,0);
+  lcd.print("Input =  ");
+  lcd.setCursor(9,0);
+  lcd.print(voltage_sensor_1());
+  lcd.print(current_sensor_2());
+  delay(500);
+}
+
+double voltage_sensor_1()
+{
+  ////Serial.print("Voltage Sensor 1 (V): ");
+  int value_1 = analogRead(voltageSensor_1);
+  float Vout_1 = (value_1 * 3.865) / 155.0;
+  //float Vin_1 = Vout_1 / (R2_1/(R1_1+R2_1));
+  //Serial.println(value_1);
+  ////Serial.println(Vout_1);
+  //Serial.println(Vin_1);
+  return Vin_1;
+}
+
+float voltage_sensor_2()
+{
+  value_2 = analogRead(voltageSensor_2);
+  Vout_2 = (value_2 * 5.0) / 1024.0;
+  Vin_2 = Vout_2 / (R2_2/(R1_1+R2_2));
+  return Vin_2;
+}
+
+float voltage_sensor_3()
+{
+  value_3 = analogRead(voltageSensor_3);
+  Vout_3 = (value_3 * 5.0) / 1024.0;
+  Vin_3 = Vout_3 / (R2_3/(R2_3+R2_3));
+  return Vin_3;
+}
+
+float current_sensor_1()
+{
+  adcValue = analogRead(currentSensor_1);
+  adcVoltage = (adcValue / 1024.0) * 5000;
+  currentValue_1 = ((adcVoltage - offsetVoltage)/sensitivity);
+  return currentValue_1;
+}
+
+double current_sensor_2()
+{
+  Serial.print("Current Sensor 1 (mA): ");
+  int adcValue = analogRead(currentSensor_2);
+  float adcVoltage = (adcValue / 2.56);
+  //float currentValue_2 = ((adcVoltage - offsetVoltage)/sensitivity);
+  Serial.println(adcValue);
+  Serial.println(adcVoltage);
+  //Serial.println(currentValue_2);
+  //return currentValue_2;
+}
+
+float current_sensor_3()
+{
+  adcValue = analogRead(currentSensor_3);
+  adcVoltage = (adcValue / 1024.0) * 5000;
+  currentValue_3 = ((adcVoltage - offsetVoltage)/sensitivity);
+  return currentValue_3;
+}
