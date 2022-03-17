@@ -1,0 +1,18 @@
+const int voltage_sensor_2_pin = A11;
+float TIME;
+void setup() {
+  // put your setup code here, to run once:
+Serial.begin(9600);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+TIME = millis();
+int value_1 = analogRead(voltage_sensor_2_pin);
+float Vout_1 = (9.0/364.5)*value_1;
+//Serial.println(value_1);
+Serial.print(Vout_1);
+Serial.print(",");
+Serial.println(TIME);
+delay(400);
+}
