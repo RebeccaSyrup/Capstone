@@ -1,0 +1,69 @@
+#include <LiquidCrystal.h>
+
+const int current_sensor_pin = A3;
+int analog_value;
+float capa_charge_current;
+
+const int pin_RS = 8;
+const int pin_EN = 9;
+const int pin_d4 = 4;
+const int pin_d5 = 5;
+const int pin_d6 = 6;
+const int pin_d7 = 7;
+const int pin_BL = 10;
+
+LiquidCrystal lcd(pin_RS, pin_EN, pin_d4, pin_d5, pin_d6, pin_d7);
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  lcd.begin(16,2);
+  lcd.setCursor(0,0);
+  lcd.print("Initializing");
+  lcd.setCursor(0,1);
+  delay(3000);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  lcd.setCursor(0,0);
+  lcd.print("Current: ");
+  lcd.print(charging_current_sensor());
+  lcd.setCursor(0,1);
+  delay(5000);
+}
+
+float charging_current_sensor()
+{
+  analog_value = analogRead(current_sensor_pin);
+  if (analog_value < 195 && analog_value >= 125 ){
+    capa_charge_current = (80.0/175.0)*analog_value;
+  }
+  else if (analog_value < 125 && analog_value >= 80){
+    capa_charge_current = (50.0/105.0)*analog_value;
+  }
+  else if (analog_value < 80 && analog_value >= 62){
+    capa_charge_current = (37.0/75.5)*analog_value;
+  }
+  else if (analog_value < 62 && analog_value >= 50){
+    capa_charge_current = (30.0/59.0)*analog_value;
+  }
+  else if (analog_value < 50 && analog_value >= 40){
+    capa_charge_current = (25.0/47.7)*analog_value;
+  }
+  else if (analog_value < 40 && analog_value >= 27){
+    capa_charge_current = (20.0/36.0)*analog_value;
+  }
+  else if (analog_value < 27 && analog_value >= 17){
+    capa_charge_current = (15.0/24.5)*analog_value;
+  }
+  else if (analog_value < 17 && analog_value >= 0){
+    capa_charge_current = (9.8/13.0)*analog_value;
+  }
+  else {
+    capa_charge_current = (150.0/338.0)*analog_value;
+  }
+  return capa_charge_current;
+  Serial.println(capa_charge_current);
+  delay(1000);
+}
