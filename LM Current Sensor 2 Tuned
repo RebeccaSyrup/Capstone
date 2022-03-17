@@ -1,0 +1,14 @@
+const int LM_sensor = A3;
+double x;
+double tune;
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  x = analogRead(LM_sensor);
+  tune = (195/413.5)*x;
+  Serial.println(tune, 3);
+}
