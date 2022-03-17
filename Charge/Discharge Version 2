@@ -1,0 +1,184 @@
+const int relay_pin_CC = 4;
+const int relay_pin_CV = 5; 
+const int relay_pin_discharge = 6;
+const int voltage_sensor_capa_pin = A8;
+const int current_sensor_capa_charge_pin = A3;
+
+const int discharge_enable_button_pin = 2;
+const int discharge_disable_button_pin = 3;
+const int current_sensor_capa_discharge_pin = A9;
+
+float capa_discharge_current;
+
+float capa_charge_current;
+float capa_voltage;
+bool CV_begin;
+bool discharge;
+
+float discharge_time;
+float t_now_discharge, t_last_discharge;
+
+float charge_time_CC, charge_time_CV;
+float t_now_charge, t_last_charge_CC, t_last_charge_CV;
+
+/////functions///////
+
+float voltage_sensor_capa_read(const int voltage_sensor_pin){
+  int analog_value = analogRead(voltage_sensor_pin);
+  float voltage = (analog_value * 3.2) / 129;
+  return voltage;
+}
+
+float current_sensor_capa_charge_read(const int current_sensor_pin){
+  int analog_value = analogRead(current_sensor_pin);
+  float current;
+   if (analog_value < 195 && analog_value >= 125 ){
+    current = (80.0/175.0)*analog_value;
+  }
+  else if (analog_value < 125 && analog_value >= 80){
+    current = (50.0/105.0)*analog_value;
+  }
+  else if (analog_value < 80 && analog_value >= 62){
+    current = (37.0/75.5)*analog_value;
+  }
+  else if (analog_value < 62 && analog_value >= 50){
+    current = (30.0/59.0)*analog_value;
+  }
+  else if (analog_value < 50 && analog_value >= 40){
+    current = (25.0/47.7)*analog_value;
+  }
+  else if (analog_value < 40 && analog_value >= 27){
+    current = (20.0/36.0)*analog_value;
+  }
+  else if (analog_value < 27 && analog_value >= 17){
+    current = (15.0/24.5)*analog_value;
+  }
+  else if (analog_value < 17 && analog_value >= 0){
+    current = (9.8/13.0)*analog_value;
+  }
+  else {
+    current = (150.0/338.0)*analog_value;
+  }
+  return current;
+}
+
+float current_sensor_capa_discharge_read(const int current_sensor_pin){
+  int analog_value = analogRead(current_sensor_pin);
+  float current = (195/413.5)*analog_value;
+  return current;
+}
+////////////////////////////////////////////////
+
+void setup()
+{ 
+  Serial.begin(115200);
+  pinMode(relay_pin_CC, OUTPUT);
+  pinMode(relay_pin_CV, OUTPUT);
+  pinMode(relay_pin_discharge, OUTPUT);
+  pinMode(discharge_enable_button_pin, INPUT);
+  pinMode(discharge_disable_button_pin, INPUT);
+  CV_begin = false;
+  discharge = false;
+  discharge_time = 0;
+  t_last_discharge = 0;
+  charge_time_CC = 0;
+  charge_time_CV = 0;
+  t_last_charge_CC = 0;
+  t_last_charge_CV = 0;
+} 
+
+void loop() 
+{ 
+  capa_voltage = voltage_sensor_capa_read(voltage_sensor_capa_pin);
+     while(discharge == false && capa_voltage < 3.85 && CV_begin == false) {
+      capa_voltage = voltage_sensor_capa_read(voltage_sensor_capa_pin);
+      capa_charge_current =  current_sensor_capa_charge_read(current_sensor_capa_charge_pin);
+      digitalWrite(relay_pin_CC, HIGH);
+      digitalWrite(relay_pin_CV, LOW);
+      digitalWrite(relay_pin_discharge, LOW);
+      t_now_charge = millis();
+      charge_time_CC = (t_now_charge - t_last_charge_CC)/ 1000.0;
+      t_now_charge = t_last_charge_CC;
+      Serial.print("recharging CC,  ");
+      Serial.print("current: ");
+      Serial.print(capa_charge_current);
+      Serial.print(" mA");
+      Serial.print("  voltage:");
+      Serial.print(capa_voltage);
+      Serial.print(" volts");
+      //Serial.print("  time: ");
+      //Serial.print(charge_time_CC);
+      //Serial.println(" seconds");
+      }
+    
+    while ((discharge == false && CV_begin == true) || (discharge == false && capa_voltage >= 3.85)) {
+      CV_begin = true;
+      capa_voltage = voltage_sensor_capa_read(voltage_sensor_capa_pin);
+      capa_charge_current =  current_sensor_capa_charge_read(current_sensor_capa_charge_pin);
+     if (capa_charge_current >= 100){
+      digitalWrite(relay_pin_CC, LOW);
+      digitalWrite(relay_pin_CV, HIGH);
+      digitalWrite(relay_pin_discharge, LOW);
+      t_now_charge = millis();
+      charge_time_CV = charge_time_CC + (t_now_charge - t_last_charge_CV)/1000.0;
+      t_now_charge = t_last_charge_CV;
+      Serial.print("recharging CV,  ");
+      Serial.print("current: ");
+      Serial.print(capa_charge_current);
+      Serial.print(" mA");
+      Serial.print("  voltage:");
+      Serial.print(capa_voltage);
+      Serial.print(" volts");
+      //Serial.print("  time: ");
+      //Serial.print(charge_time_CV);
+      //Serial.println(" seconds");
+     }
+     else {
+     digitalWrite(relay_pin_CC, LOW);
+     digitalWrite(relay_pin_CV, HIGH);
+     digitalWrite(relay_pin_discharge, LOW);
+     Serial.print("  voltage:");
+     Serial.println(capa_voltage);
+     Serial.print(" volts");
+     Serial.print("  fully charged");
+     //Serial.print("  charge time: ");
+     //Serial.print(charge_time_CV);
+     //Serial.println(" seconds");
+     if (digitalRead(discharge_enable_button_pin) == HIGH) {
+      discharge_time = 0;
+      t_last_discharge = 0;
+      CV_begin = false;
+      discharge = true;
+     }
+     }
+    }
+
+  while (discharge == true){
+    digitalWrite(relay_pin_CC, LOW);
+    digitalWrite(relay_pin_CV, LOW);
+    digitalWrite(relay_pin_discharge, HIGH);
+    capa_voltage = voltage_sensor_capa_read(voltage_sensor_capa_pin);
+    capa_discharge_current = current_sensor_capa_discharge_read(current_sensor_capa_discharge_pin);
+    
+    t_now_discharge = millis();
+    discharge_time = (t_now_discharge - t_last_discharge)/ 1000.0;
+    t_now_discharge = t_last_discharge;
+    Serial.print("discharging,  ");
+    Serial.print("  voltage:");
+    Serial.print(capa_voltage);
+    Serial.print(" volts");
+    Serial.print("  current: ");
+    Serial.print(capa_discharge_current);
+    Serial.println(" mA");
+    //Serial.print("  time: ");
+    //Serial.print(discharge_time);
+    //Serial.println(" seconds");
+    if (capa_voltage < 3.3 || digitalRead(discharge_disable_button_pin) == HIGH){
+      charge_time_CC = 0;
+      charge_time_CV = 0;
+      t_last_charge_CC = 0;
+      t_last_charge_CV = 0;
+      discharge = false;
+    }
+  }
+}
