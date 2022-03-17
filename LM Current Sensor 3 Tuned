@@ -1,0 +1,37 @@
+const int LM_current_sensor = A3;
+double x;
+double tune;
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly
+  x = analogRead(LM_current_sensor);
+  if(x > 426.00)
+  {
+    tune = (350/734.5)*x;
+    Serial.println(tune,3);
+    //Serial.println(x);
+  }
+  else if(x > 294.00)
+  {
+    tune = (210/425.5)*x;
+    Serial.println(tune,3);
+    //Serial.println(x);
+  }
+  else if(x > 205.00)
+  {
+    tune = (150/293.5)*x;
+    Serial.println(tune, 3);
+    //Serial.println(x);
+  }
+  else
+  {
+    tune = (110/204.5)*x;
+    Serial.println(tune,3);
+    //Serial.println(x);
+  }
+}
+ 
