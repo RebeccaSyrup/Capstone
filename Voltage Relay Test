@@ -1,0 +1,34 @@
+const int relay_pin = 4; 
+const int voltageSensor_1 = A8;
+
+void setup()
+{ 
+  Serial.begin(9600);
+  pinMode(relay_pin, OUTPUT); 
+} 
+
+void loop() 
+{ 
+  double capa_vol = voltage_sensor_1();
+  if(capa_vol <= 3.8) 
+  { 
+    digitalWrite(relay_pin, HIGH);   
+  }
+  else if(capa_vol >= 3.9)
+  {
+    digitalWrite(relay_pin, LOW);
+  }
+} 
+
+
+double voltage_sensor_1()
+{
+  ////Serial.print("Voltage Sensor 1 (V): ");
+  int value_1 = analogRead(voltageSensor_1);
+  float Vout_1 = (value_1 * 3.865) / 155.0;
+  //float Vin_1 = Vout_1 / (R2_1/(R1_1+R2_1));
+  //Serial.println(value_1);
+  ////Serial.println(Vout_1);
+  //Serial.println(Vin_1);
+  return Vout_1;
+}
