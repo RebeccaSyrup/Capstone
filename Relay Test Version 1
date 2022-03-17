@@ -1,0 +1,79 @@
+const int relay_pin_CC = 4;
+const int relay_pin_CV = 5; 
+const int relay_pin_discharge = 6;
+const int voltageSensor_1 = A8;
+const int LM_current_sensor_pin_1 = A3;
+
+double current_sensor_1;
+double current_sensor_1_tune;
+float tNow, tLast;
+float tWait = 5000;
+
+void setup()
+{ 
+  Serial.begin(9600);
+  pinMode(relay_pin, OUTPUT); 
+} 
+
+void loop() 
+{ 
+  tNow = millis();
+  double capa_vol = voltage_sensor_1();
+  Serial.println(capa_vol);
+  if(capa_vol <= 3.7) 
+  { 
+    digitalWrite(relay_pin_CC, HIGH);
+    digitalWrite(relay_pin_CV, LOW);
+    digitalWrite(relay_pin_discharge, LOW);
+    return
+  }
+  else if(capa_vol >= 3.95)
+  {
+    if (tLast - tNow >= tWait)
+    {
+      digitalWrite(relay_pin_CC, LOW);
+      digitalWrite(relay_pin_CV, HIGH);
+      digitalWrite(relay_pin_discharge, LOW);
+      double discharge_current = current_sensor_1();
+      if(discharge_current <= 50)
+      {
+        digitalWrite(relay_pin_CC, LOW);
+        digitalWrite(relay_pin_CV, LOW);
+        digitalWrite(relay_pin_discharge, HIGH);
+        double capa_voltage = voltage_sensor_1();
+        float t_start = millis();
+        float discharge_time = 120000;
+        if(t_start = discharge_time || capa_voltage <= 3.3)
+        {
+          digitalWrite(relay_pin_discharge, LOW);
+          digitalWrite(relay_pin_CC, HIGH);
+          digitalWrite(relay_pin_CV, LOW);
+          return
+        }
+      }
+      return
+    }
+  }
+
+  tLast = tNow;
+} 
+
+
+double voltage_sensor_1()
+{
+  ////Serial.print("Voltage Sensor 1 (V): ");
+  int value_1 = analogRead(voltageSensor_1);
+  float Vout_1 = (value_1 * 3.755) / 155.0;
+  //float Vin_1 = Vout_1 / (R2_1/(R1_1+R2_1));
+  //Serial.println(value_1);
+  ////Serial.println(Vout_1);
+  //Serial.println(Vin_1);
+  return Vout_1;
+}
+
+double current_sensor_1()
+{
+  x = analogRead(LM_current_sensor_pin_1);
+  current_sensor_1_tune = (100/213.5)*x;
+  return current_sensor_1_tune;
+}
