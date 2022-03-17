@@ -1,0 +1,15 @@
+const int LM_current_sensor_pin = A3;
+double x;
+double real;
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  x = analogRead(LM_current_sensor_pin);
+  real = (100/213.5)*x;
+  Serial.println(real,3);
+  //Serial.println(x);
+}
