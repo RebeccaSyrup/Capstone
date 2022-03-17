@@ -1,0 +1,24 @@
+//Current Sensor Code for Arduino Uno
+//Source: https://www.electronicshub.org/interfacing-acs712-current-sensor-with-arduino/#:~:text=The%20screw%20terminals%20of%20the,LCD%20is%20connected%20to%20Arduino.
+
+const int currentSensorPin = A0; //Obviously we can shift this pin to whatever position
+int current_sensor_sensitivity = 66;
+int adcValue = 0;
+int offsetVoltage = 2500;
+double adcVoltage = 0;
+double currentValue = 0;
+
+void setup() {
+  // put your setup code here, to run once:
+Serial.begin(9600);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+adcValue = analogRead(currentSensorPin);
+adcVoltage = (adcValue/ 1024.0) * 5000;
+currentValue = ((adcVoltage - offsetVoltage)/current_sensor_sensitivity);
+
+Serial.print("Raw Sensor Value: ");
+Serial.print(currentValue);
+}
