@@ -56,7 +56,15 @@ Available Supercapacitors
 Rated Current: 150mA/unit
 
 
-Members of Team: Pawat Promraksa, Maxwell McKendry, Andres Rodriguez, Rebecca Syrup
+Members of Team: 
+
+Pawat Promraksa (603)266-9009 pawat81@gmail.com
+
+Maxwell McKendry (949)616-0332 maxwellmckendry@yahoo.com
+
+Andres Rodriguez (915)616-0332 arod_64@hotmail.com
+
+Rebecca Syrup (907)947-7938 rebeccasyrup@yahoo.com
 
 Instructors: Dr. St. Leger,
 
