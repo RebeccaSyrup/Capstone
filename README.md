@@ -58,7 +58,7 @@ Rated Current: 150mA/unit
 
 Members of Team: Pawat Promraksa, Maxwell McKendry, Andres Rodriguez, Rebecca Syrup
 
-Instructors: COL Ingold
+Instructors: Dr. St. Leger,
 
-Advisors: Dr. St. Leger, LTC Babbitt
+Advisors: COL Ingold, LTC Babbitt
 
