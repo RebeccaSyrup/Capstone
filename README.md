@@ -20,28 +20,45 @@ Features:
 
 Outcomes:
 
-  Efficient Hybrid Power Supply: Both battery power and capacitor sources can work in       tandem to effectively regulate the laser system better than a single source alone.
+  Efficient Hybrid Power Supply: Both battery power and capacitor sources can work in     
+  tandem to effectively regulate the laser system better than a single source alone.
 
-  Lightweight yet Friendly: GUI puts the user in control of the power systems while         maintaining the lightweight and durable requirement necessary for Army vehicles and       combat scenarios. 
+  Lightweight yet Friendly: GUI puts the user in control of the power systems while         
+  maintaining the lightweight and durable requirement necessary for Army vehicles and       
+  combat scenarios. 
 
-  Upscale Ability: Project’s input and output requirements can be upscaled to match         requirements by the Stryker system. 
+  Upscale Ability: Project’s input and output requirements can be upscaled to match        
+  requirements by the Stryker system. 
 
 
-Operational Requirements:
- Rated Output Power (optical): 100mW 
- Optical Efficiency: >=30% 
- Run Time: 120 seconds
- Recharge Time: 280 seconds
- Weight <= 3kg
-Constraints:
- $1,000 budget 
- Available Supercapacitors
- 3.8V Maximum Voltage
- 60 Farads/unit
- Rated Current: 150mA/unit
+**Operational Requirements:**
+
+Rated Output Power (optical): 100mW 
+
+Optical Efficiency: >=30% 
+
+Run Time: 120 seconds
+
+Recharge Time: 280 seconds
+
+Weight <= 3kg
+
+**Constraints:**
+
+$1,000 budget 
+
+Available Supercapacitors
+
+3.8V Maximum Voltage
+
+60 Farads/unit
+
+Rated Current: 150mA/unit
 
 
 Members of Team: Pawat Promraksa, Maxwell McKendry, Andres Rodriguez, Rebecca Syrup
+
 Instructors: COL Ingold
-Advisors: Dr. Hanlon, Dr. St. Leger, LTC Babbitt
+
+Advisors: Dr. St. Leger, LTC Babbitt
 
