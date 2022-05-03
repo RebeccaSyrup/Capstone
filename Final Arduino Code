@@ -1,0 +1,972 @@
+#include <LiquidCrystal.h>
+const int pin_RS = 8; 
+const int pin_EN = 9; 
+const int pin_d4 = 4; 
+const int pin_d5 = 5; 
+const int pin_d6 = 6;
+const int pin_d7 = 7; 
+const int pin_BL = 10; 
+LiquidCrystal lcd( pin_RS,  pin_EN,  pin_d4,  pin_d5,  pin_d6,  pin_d7);
+String screen_page;
+float t_now_button, t_last_button = 0, t_wait_button = 150;
+///////////////////////////////////////////////////////////////////////
+
+/////////////////////Laser Variables////////////////////
+const int voltage_sensor_laser_pin = A10;
+float laser_voltage;
+
+const int current_sensor_laser_pin = A9;
+float laser_current;
+bool discharge_lock_enable;
+///////////////////////////////////////////////////////
+
+
+
+///////////////////////Supercapacitor Variables///////////////////////
+const int capa_enable_pin = 47;
+const int voltage_sensor_capa_pin = A14;
+float capa_voltage;
+String capa_status;
+
+const int relay_pin_CC = 53, relay_pin_CV = 52, current_sensor_capa_charge_pin = A15; 
+float capa_charge_current;
+bool CV_begin;
+float charge_time, charge_time_CC, charge_time_CV, t_now_charge, t_last_charge_CC, t_last_charge_CV;
+
+const int discharge_enable_button_pin = 49, discharge_disable_button_pin = 48, relay_pin_discharge = 51, current_sensor_capa_discharge_pin = A13;
+float capa_discharge_current;
+bool discharge;
+float discharge_time, t_now_discharge, t_last_discharge;
+/////////////////////////////////////////////////////////////////////
+
+
+///////////////////////Battery Variables///////////////////////
+const int batt_voltage_sensor_pin = A12, batt_current_sensor_pin = A11, batt_recharge_pin = 50;
+float batt_current, batt_power, batt_voltage;
+int batt_percent;
+String batt_charge_status;
+//////////////////////////////////////////////////////////////
+
+///////////////////////LCD Functions////////////////////////
+
+byte Lock[] = {
+  B01110,
+  B10001,
+  B10001,
+  B10001,
+  B11111,
+  B11011,
+  B11011,
+  B11111
+};
+
+bool discharge_lock_check(bool discharge_lock_enable) {
+  int LCD_button;
+  LCD_button = analogRead(A0);
+  if (LCD_button < 850 && LCD_button >= 685){
+      discharge_lock_enable = !(discharge_lock_enable);
+    }
+  return discharge_lock_enable;
+}
+
+String screen_page_read(String screen_page){
+  int LCD_button;
+  LCD_button = analogRead(A0);
+  
+  if (screen_page == "battery_0") {
+    if (LCD_button < 60) { //Right
+      screen_page = "capacitor_0";
+    }
+    else if (LCD_button < 280) { //Up
+      screen_page = "battery_0";
+    }
+    else if (LCD_button < 450){ //Down
+      screen_page = "battery_1";
+    }
+    else if (LCD_button < 650){ //Lect
+      screen_page = "battery_0";
+    }
+  }
+
+  else if (screen_page == "battery_1") {
+    if (LCD_button < 60) {
+      screen_page = "capacitor_0";
+    }
+    else if (LCD_button < 280) {
+      screen_page = "battery_0";
+    }
+    else if (LCD_button < 450){
+      lcd.clear();
+      screen_page = "battery_2";
+    }
+    else if (LCD_button < 650){
+      screen_page = "battery_1";
+    }
+  }
+
+  else if (screen_page == "battery_2") {
+    if (LCD_button < 60) {
+      screen_page = "capacitor_0";
+    }
+    else if (LCD_button < 280) {
+      screen_page = "battery_1";
+    }
+    else if (LCD_button < 450){
+      screen_page = "battery_3";
+    }
+    else if (LCD_button < 650){
+      screen_page = "battery_2";
+    }
+  }
+
+  else if (screen_page == "battery_3") {
+    if (LCD_button < 60) {
+      screen_page = "capacitor_0";
+    }
+    else if (LCD_button < 280) {
+      screen_page = "battery_2";
+    }
+    else if (LCD_button < 450){
+      screen_page = "battery_3";
+    }
+    else if (LCD_button < 650){
+      screen_page = "battery_3";
+    }
+  }
+  
+  else if (screen_page == "capacitor_0") {
+    if (LCD_button < 60) {
+      screen_page = "laser_0";
+    }
+    else if (LCD_button < 280) {
+      screen_page = "capacitor_0";
+    }
+    else if (LCD_button < 450){
+      screen_page = "capacitor_1";
+    }
+    else if (LCD_button < 650){
+      screen_page = "battery_0";
+    }
+  }
+
+  else if (screen_page == "capacitor_1") {
+    if (LCD_button < 60) {
+      screen_page = "laser_0";
+    }
+    else if (LCD_button < 280) {
+      screen_page = "capacitor_0";
+    }
+    else if (LCD_button < 450){
+      screen_page = "capacitor_2";
+    }
+    else if (LCD_button < 650){
+      screen_page = "battery_0";
+    }
+  }
+
+  else if (screen_page == "capacitor_2") {
+    if (LCD_button < 60) {
+      screen_page = "laser_0";
+    }
+    else if (LCD_button < 280) {
+      screen_page = "capacitor_1";
+    }
+    else if (LCD_button < 450){
+      screen_page = "capacitor_3";
+    }
+    else if (LCD_button < 650){
+      screen_page = "battery_0";
+    }
+  }
+
+  else if (screen_page == "capacitor_3") {
+    if (LCD_button < 60) {
+      screen_page = "laser_0";
+    }
+    else if (LCD_button < 280) {
+      screen_page = "capacitor_2";
+    }
+    else if (LCD_button < 450){
+      screen_page = "capacitor_3";
+    }
+    else if (LCD_button < 650){
+      screen_page = "battery_0";
+    }
+  }
+  else if (screen_page == "laser_0") {
+    if (LCD_button < 60) {
+      screen_page = "laser_0";
+    }
+    else if (LCD_button < 280) {
+      screen_page = "laser_0";
+    }
+    else if (LCD_button < 450){
+      screen_page = "laser_1";
+    }
+    else if (LCD_button < 650){
+      screen_page = "capacitor_0";
+    }
+  }
+  else if (screen_page == "laser_1") {
+    if (LCD_button < 60) {
+      screen_page = "laser_1";
+    }
+    else if (LCD_button < 280) {
+      screen_page = "laser_0";
+    }
+    else if (LCD_button < 450){
+      screen_page = "laser_2";
+    }
+    else if (LCD_button < 650){
+      screen_page = "capacitor_0";
+    }
+  }
+  else if (screen_page == "laser_2") {
+    if (LCD_button < 60) {
+      screen_page = "laser_2";
+    }
+    else if (LCD_button < 280) {
+      screen_page = "laser_1";
+    }
+    else if (LCD_button < 450){
+      screen_page = "laser_3";
+    }
+    else if (LCD_button < 650){
+      screen_page = "capacitor_0";
+    }
+  }
+  else if (screen_page == "laser_3") {
+    if (LCD_button < 60) {
+      screen_page = "laser_3";
+    }
+    else if (LCD_button < 280) {
+      screen_page = "laser_2";
+    }
+    else if (LCD_button < 450){
+      screen_page = "laser_3";
+    }
+    else if (LCD_button < 650){
+      screen_page = "capacitor_0";
+    }
+  }
+  return screen_page;
+}
+
+void LCD(float capa_voltage, int capa_charge_current, float charge_time, int capa_discharge_current, float discharge_time, int batt_current, float batt_voltage, int batt_percent, String batt_charge_status, String capa_status, String screen_page, float laser_voltage, int laser_current, bool discharge_lock_enable){
+  lcd.clear();
+  if (discharge_lock_enable == true){
+    lcd.setCursor(15,0);
+    lcd.write(byte(0));
+  
+    if (screen_page == "battery_0") {
+      if (batt_percent <= 15){
+       lcd.setCursor(0,0);
+       lcd.print("Battery: ");
+       lcd.print(batt_percent);
+       lcd.print(" %");
+       lcd.setCursor(0,1);
+       lcd.print("Low Battery");
+      }
+      else {
+        lcd.setCursor(0,0);
+        lcd.print("Battery: ");
+        lcd.print(batt_percent);
+        lcd.print(" %");
+        lcd.setCursor(0,1);
+        lcd.print(batt_charge_status);
+      }
+    }
+
+    else if (screen_page == "battery_1") {
+      lcd.setCursor(0,0);
+      lcd.print("Battery: ");
+      lcd.print(batt_percent);
+      lcd.print(" %");
+      lcd.setCursor(0,1);
+      lcd.print("voltage: ");
+      lcd.print(batt_voltage);
+      lcd.print(" V");  
+    }
+
+    else if (screen_page == "battery_2") {
+      lcd.setCursor(0,0);
+      lcd.print("Battery: ");
+      lcd.print(batt_percent);
+      lcd.print(" %");
+      lcd.setCursor(0,1);
+      lcd.print("current: ");
+      lcd.print(batt_current);
+      lcd.print(" mA");  
+    }
+  
+    else if (screen_page == "battery_3") {
+      lcd.setCursor(0,0);
+      lcd.print("Battery: ");
+      lcd.print(batt_percent);
+      lcd.print(" %");
+      lcd.setCursor(0,1);
+      lcd.print("Power: ");
+      lcd.print(int(round(batt_voltage * batt_current)));
+      lcd.print(" mW");  
+    }
+
+    else if (screen_page == "capacitor_0") {
+      lcd.setCursor(0,0);
+      lcd.print("Supercapacitor ");
+      lcd.setCursor(0,1);
+      lcd.print(capa_status);
+      }
+
+    else if (screen_page == "capacitor_1") {
+      lcd.setCursor(0,0);
+      lcd.print("Supercapacitor ");
+      lcd.setCursor(0,1);
+      lcd.print("Time: ");
+      if (capa_status == "discharging") {
+        lcd.print(int(discharge_time));
+        lcd.print(" Sec");
+      }
+     else {
+       lcd.print(int(charge_time));
+       lcd.print(" Sec");
+     }
+    }
+
+    else if (screen_page == "capacitor_2") {
+      lcd.setCursor(0,0);
+      lcd.print("Supercapacitor");
+      lcd.setCursor(0,1);
+      lcd.print("Voltage: ");
+      lcd.print(capa_voltage);
+      lcd.print(" V");
+    }
+
+    else if (screen_page == "capacitor_3") {
+      lcd.setCursor(0,0);
+      lcd.print("Supercapacitor");
+      lcd.setCursor(0,1);
+      lcd.print("Current: ");
+      if (capa_status == "discharging") {
+        lcd.print(capa_discharge_current);
+        lcd.print(" mA");
+      }
+      else {
+        lcd.print(capa_charge_current);
+        lcd.print(" mA");
+      }
+    }
+    else if (screen_page == "laser_0") {
+      lcd.setCursor(0,0);
+      lcd.print("Laser: ");
+      if (capa_status == "discharging") {
+        lcd.print("ON");
+        lcd.setCursor(0,1);
+        lcd.print("Time: ");
+        lcd.print(int(discharge_time));
+        lcd.print(" Sec");
+      }
+      else {
+        lcd.print("OFF");
+        lcd.setCursor(0,1);
+        lcd.print("Time: N/A");
+      }      
+    }
+    else if (screen_page == "laser_1") {
+      lcd.setCursor(0,0);
+      lcd.print("Laser: ");
+      if (capa_status == "discharging") {
+        lcd.print("ON");
+        lcd.setCursor(0,1);
+        lcd.print("Voltage: ");
+        lcd.print(laser_voltage);
+        lcd.print(" V");
+      }
+      else {
+        lcd.print("OFF");
+        lcd.setCursor(0,1);
+        lcd.print("Voltage: N/A");
+      }      
+    }
+    else if (screen_page == "laser_2") {
+      lcd.setCursor(0,0);
+      lcd.print("Laser: ");
+      if (capa_status == "discharging") {
+        lcd.print("ON");
+        lcd.setCursor(0,1);
+        lcd.print("Current: ");
+        lcd.print(laser_current);
+        lcd.print(" mA");
+      }
+      else {
+        lcd.print("OFF");
+        lcd.setCursor(0,1);
+        lcd.print("Current: N/A");
+      }      
+    }
+    else if (screen_page == "laser_3") {
+      lcd.setCursor(0,0);
+      lcd.print("Laser: ");
+      if (capa_status == "discharging") {
+        lcd.print("ON");
+        lcd.setCursor(0,1);
+        lcd.print("Power: ");
+        lcd.print(int(round(laser_voltage * laser_current)));
+        lcd.print(" mW");
+      }
+      else {
+        lcd.print("OFF");
+        lcd.setCursor(0,1);
+        lcd.print("Power: N/A");
+      }      
+    }
+  }
+
+  else {
+    if (screen_page == "battery_0") {
+      if (batt_percent <= 15){
+       lcd.setCursor(0,0);
+       lcd.print("Battery: ");
+       lcd.print(batt_percent);
+       lcd.print(" %");
+       lcd.setCursor(0,1);
+       lcd.print("Low Battery");
+      }
+      else {
+        lcd.setCursor(0,0);
+        lcd.print("Battery: ");
+        lcd.print(batt_percent);
+        lcd.print(" %");
+        lcd.setCursor(0,1);
+        lcd.print(batt_charge_status);
+      }
+    }
+
+    else if (screen_page == "battery_1") {
+      lcd.setCursor(0,0);
+      lcd.print("Battery: ");
+      lcd.print(batt_percent);
+      lcd.print(" %");
+      lcd.setCursor(0,1);
+      lcd.print("voltage: ");
+      lcd.print(batt_voltage);
+      lcd.print(" V");  
+    }
+
+    else if (screen_page == "battery_2") {
+      lcd.setCursor(0,0);
+      lcd.print("Battery: ");
+      lcd.print(batt_percent);
+      lcd.print(" %");
+      lcd.setCursor(0,1);
+      lcd.print("current: ");
+      lcd.print(batt_current);
+      lcd.print(" mA");  
+    }
+  
+    else if (screen_page == "battery_3") {
+      lcd.setCursor(0,0);
+      lcd.print("Battery: ");
+      lcd.print(batt_percent);
+      lcd.print(" %");
+      lcd.setCursor(0,1);
+      lcd.print("Power: ");
+      lcd.print(int(round(batt_voltage * batt_current)));
+      lcd.print(" mW");  
+    }
+
+    else if (screen_page == "capacitor_0") {
+      lcd.setCursor(0,0);
+      lcd.print("Supercapacitor ");
+      lcd.setCursor(0,1);
+      lcd.print(capa_status);
+      }
+
+    else if (screen_page == "capacitor_1") {
+      lcd.setCursor(0,0);
+      lcd.print("Supercapacitor ");
+      lcd.setCursor(0,1);
+      lcd.print("Time: ");
+      if (capa_status == "discharging") {
+        lcd.print(int(discharge_time));
+        lcd.print(" Sec");
+      }
+     else {
+       lcd.print(int(charge_time));
+       lcd.print(" Sec");
+     }
+    }
+
+    else if (screen_page == "capacitor_2") {
+      lcd.setCursor(0,0);
+      lcd.print("Supercapacitor");
+      lcd.setCursor(0,1);
+      lcd.print("Voltage: ");
+      lcd.print(capa_voltage);
+      lcd.print(" V");
+    }
+
+    else if (screen_page == "capacitor_3") {
+      lcd.setCursor(0,0);
+      lcd.print("Supercapacitor");
+      lcd.setCursor(0,1);
+      lcd.print("Current: ");
+      if (capa_status == "discharging") {
+        lcd.print(capa_discharge_current);
+        lcd.print(" mA");
+      }
+      else {
+        lcd.print(capa_charge_current);
+        lcd.print(" mA");
+      }
+    }
+    else if (screen_page == "laser_0") {
+      lcd.setCursor(0,0);
+      lcd.print("Laser: ");
+      if (capa_status == "discharging") {
+        lcd.print("ON");
+        lcd.setCursor(0,1);
+        lcd.print("Time: ");
+        lcd.print(int(discharge_time));
+        lcd.print(" Sec");
+      }
+      else {
+        lcd.print("OFF");
+        lcd.setCursor(0,1);
+        lcd.print("Time: N/A");
+      }      
+    }
+    else if (screen_page == "laser_1") {
+      lcd.setCursor(0,0);
+      lcd.print("Laser: ");
+      if (capa_status == "discharging") {
+        lcd.print("ON");
+        lcd.setCursor(0,1);
+        lcd.print("Voltage: ");
+        lcd.print(laser_voltage);
+        lcd.print(" V");
+      }
+      else {
+        lcd.print("OFF");
+        lcd.setCursor(0,1);
+        lcd.print("Voltage: N/A");
+      }      
+    }
+    else if (screen_page == "laser_2") {
+      lcd.setCursor(0,0);
+      lcd.print("Laser: ");
+      if (capa_status == "discharging") {
+        lcd.print("ON");
+        lcd.setCursor(0,1);
+        lcd.print("Current: ");
+        lcd.print(laser_current);
+        lcd.print(" mA");
+      }
+      else {
+        lcd.print("OFF");
+        lcd.setCursor(0,1);
+        lcd.print("Current: N/A");
+      }      
+    }
+    else if (screen_page == "laser_3") {
+      lcd.setCursor(0,0);
+      lcd.print("Laser: ");
+      if (capa_status == "discharging") {
+        lcd.print("ON");
+        lcd.setCursor(0,1);
+        lcd.print("Power: ");
+        lcd.print(int(round(laser_voltage * laser_current)));
+        lcd.print(" mW");
+      }
+      else {
+        lcd.print("OFF");
+        lcd.setCursor(0,1);
+        lcd.print("Power: N/A");
+      }      
+    }
+  }
+
+}
+//////////////////////////////////////////////////////////////
+
+///////////////////////Laser functions///////////////////////
+float voltage_sensor_laser_read(const int voltage_sensor_pin){
+  int analog_value = analogRead(voltage_sensor_pin);
+  float voltage;
+  voltage = (analog_value * 5.0) / 1023.0;
+  return voltage;
+}
+
+int current_sensor_laser_read(const int current_sensor_pin){
+  int analog_value = analogRead(current_sensor_pin);
+  float current;
+  int current_round;
+  if (analog_value < 190 && analog_value >= 160 ){
+    current = (91.0/170.0)*analog_value;
+  }
+  else if (analog_value < 160 && analog_value >= 125 ){
+    current = (81.0/149.0)*analog_value;
+  }
+  else if (analog_value < 125 && analog_value >= 80){
+    current = (43.0/101.0)*analog_value;
+  }
+  else if (analog_value < 80 && analog_value >= 62){
+    current = (30.0/70.0)*analog_value;
+  }
+  else if (analog_value < 62 && analog_value >= 50){
+    current = (24.0/56.0)*analog_value;
+  }
+  else if (analog_value < 50 && analog_value >= 40){
+    current = (19.0/45.0)*analog_value;
+  }
+  else if (analog_value < 40 && analog_value >= 27){
+    current = (14.0/33.0)*analog_value;
+  }
+  else if (analog_value < 27 && analog_value >= 17){
+    current = (9.0/22.0)*analog_value;
+  }
+  else if (analog_value < 17 && analog_value >= 0){
+    current = (5.0/13.0)*analog_value;
+  }
+  else {
+    current = (145.0/285.0)*analog_value;
+  }
+  current_round = round(current);
+  return current_round;
+}
+
+
+/////////////////////Battery Functions///////////////////
+String batt_charge_status_read(const int batt_recharge_pin, int batt_percent) {
+  pinMode(batt_recharge_pin, INPUT);
+  String batt_charge_status;
+  if (digitalRead(batt_recharge_pin) == HIGH && batt_percent != 100){
+    batt_charge_status = "charging";
+  }
+  else if (digitalRead(batt_recharge_pin) == HIGH && batt_percent == 100){
+    batt_charge_status = "fully charged";
+  }
+  else {
+    batt_charge_status = "not charging";
+  }
+  return batt_charge_status;
+}
+
+int current_sensor_batt_read(const int batt_current_sensor_pin){
+  int analog_value = analogRead(batt_current_sensor_pin);
+  float current;
+  int current_round;
+  if (analog_value < 400 && analog_value >= 326 ){
+    current = (450.0/381.0)*analog_value;
+  }
+  else if (analog_value < 326 && analog_value >= 257){
+    current = (350.0/292.0)*analog_value;
+  }
+  else if (analog_value < 257 && analog_value >= 188){
+    current = (250/205.0)*analog_value;
+  }
+  else if (analog_value < 188 && analog_value >= 121){
+    current = (200.0/161.0)*analog_value;
+  }
+  else if (analog_value < 121 && analog_value >= 87){
+    current = (125.0/95.0)*analog_value;
+  }
+  else if (analog_value < 87 && analog_value >= 71){
+    current = (105.0/78.0)*analog_value;
+  }
+  else if (analog_value < 71 && analog_value >= 61){
+    current = (90.0/65.0)*analog_value;
+  }
+  else if (analog_value < 61 && analog_value >= 54){
+    current = (82.0/58.0)*analog_value;
+  }
+  else if (analog_value < 54 && analog_value >= 47){
+    current = (75.0/51.0)*analog_value;
+  }
+  else if (analog_value < 47 && analog_value >= 40){
+    current = (65.0/43.0)*analog_value;
+  }
+  else if (analog_value < 40 && analog_value >= 0){
+    current = (56.0/35.0)*analog_value;
+  }
+  else {
+    current = (1000.0/872.0)*analog_value;
+  }
+  current_round = round(current);
+  return current_round;
+}
+
+int batt_percent_read(const int batt_voltage_sensor_pin){
+  int voltage_sensor_analog_value = analogRead(batt_voltage_sensor_pin);
+  float batt_voltage = (10.255/420.0)*voltage_sensor_analog_value;
+
+  int batt_percent = ((batt_voltage - 9.0)/(10.4 - 9.0)) * 100.0;
+    if (batt_percent >= 100) {
+      return 100;
+    }
+    else if (batt_percent <= 0) {
+      return 0;
+    }
+    else {
+      return batt_percent;
+    }
+}
+
+float voltage_sensor_batt_read(const int batt_voltage_sensor_pin){
+  int voltage_sensor_analog_value = analogRead(batt_voltage_sensor_pin);
+  float batt_voltage = (10.255/420.0)*voltage_sensor_analog_value;
+  return batt_voltage;
+}
+//////////////////////////////////////////////////////////
+
+//////////////////Supercapacitor Functions////////////////////
+float voltage_sensor_capa_read(const int voltage_sensor_pin){
+  int analog_value = analogRead(voltage_sensor_pin);
+  float voltage;
+  voltage = (analog_value * 3.8) / 151.0;
+  return voltage;
+}
+
+int current_sensor_capa_charge_read(const int current_sensor_pin){
+  int analog_value = analogRead(current_sensor_pin);
+  float current;
+  int current_round;
+  if (analog_value < 195 && analog_value >= 125 ){
+    current = (80.0/175.0)*analog_value;
+  }
+  else if (analog_value < 125 && analog_value >= 80){
+    current = (50.0/105.0)*analog_value;
+  }
+  else if (analog_value < 80 && analog_value >= 62){
+    current = (37.0/75.5)*analog_value;
+  }
+  else if (analog_value < 62 && analog_value >= 50){
+    current = (30.0/59.0)*analog_value;
+  }
+  else if (analog_value < 50 && analog_value >= 40){
+    current = (25.0/47.7)*analog_value;
+  }
+  else if (analog_value < 40 && analog_value >= 27){
+    current = (20.0/36.0)*analog_value;
+  }
+  else if (analog_value < 27 && analog_value >= 17){
+    current = (15.0/24.5)*analog_value;
+  }
+  else if (analog_value < 17 && analog_value >= 0){
+    current = (9.8/13.0)*analog_value;
+  }
+  else {
+    current = (300.0/760.0)*analog_value;
+  }
+  current_round = round(current);
+  return current_round;
+}
+
+int current_sensor_capa_discharge_read(const int current_sensor_pin){
+  int analog_value = analogRead(current_sensor_pin);
+  int current_round;
+  float current = (250.0/565.0)*analog_value;
+  current_round = round(current);
+  return current_round;
+}
+
+String capa_status_read(bool discharge, float capa_charge_current){
+  String capa_status;
+  if (discharge == true){
+    capa_status = "discharging";
+  }
+  else {
+    if (capa_charge_current > 100){
+      capa_status = "charging";
+    }
+    else {
+      capa_status = "fully charged";
+    }
+  }
+  return capa_status;
+}
+//////////////////////////////////////////////////////
+
+void setup()
+{ 
+  Serial.begin(9600);
+
+  pinMode(capa_enable_pin, OUTPUT);
+  pinMode(relay_pin_CC, OUTPUT);
+  pinMode(relay_pin_CV, OUTPUT);
+  pinMode(relay_pin_discharge, OUTPUT);
+  pinMode(discharge_enable_button_pin, INPUT);
+  pinMode(discharge_disable_button_pin, INPUT);
+  
+  digitalWrite(capa_enable_pin, HIGH);
+  
+  CV_begin = false;
+  discharge = false;
+  discharge_time = 0;
+  charge_time_CC = 0;
+  charge_time_CV = 0;
+  capa_charge_current = 0;
+  capa_discharge_current = 0;
+  
+  t_last_charge_CC = millis();
+  t_last_charge_CV = millis();
+
+  lcd.begin(16, 2);
+  lcd.setCursor(0,0);
+  lcd.print("LW Power Supply");
+  lcd.setCursor(0,1);
+  lcd.print("For HI Laser");
+  delay(3000);
+  lcd.clear();
+  screen_page = "battery_0";
+
+  lcd.createChar(0, Lock);
+
+  discharge_lock_enable = true;
+} 
+
+void loop() { 
+  capa_voltage = voltage_sensor_capa_read(voltage_sensor_capa_pin);
+  
+  while(discharge == false && capa_voltage < 3.85 && CV_begin == false) {
+    
+    capa_voltage = voltage_sensor_capa_read(voltage_sensor_capa_pin);
+    capa_charge_current =  current_sensor_capa_charge_read(current_sensor_capa_charge_pin);
+      
+    digitalWrite(relay_pin_CC, HIGH);
+    digitalWrite(relay_pin_CV, LOW);
+    digitalWrite(relay_pin_discharge, LOW);
+      
+    t_now_charge = millis();
+    charge_time_CC = charge_time_CC + (t_now_charge - t_last_charge_CC)/ 1000.0;
+    charge_time = charge_time_CC;
+    t_last_charge_CC = t_now_charge ;
+
+    batt_current = current_sensor_batt_read(batt_current_sensor_pin);
+    batt_voltage = voltage_sensor_batt_read(batt_voltage_sensor_pin);
+    batt_percent = batt_percent_read(batt_voltage_sensor_pin);
+    batt_charge_status = batt_charge_status_read(batt_recharge_pin, batt_percent);
+    capa_status = capa_status_read(discharge, capa_charge_current);
+    laser_voltage = voltage_sensor_laser_read(voltage_sensor_laser_pin);
+    laser_current = current_sensor_laser_read(current_sensor_laser_pin);
+    t_now_button = millis();
+ 
+    if (t_now_button - t_last_button > t_wait_button) {
+      discharge_lock_enable = discharge_lock_check(discharge_lock_enable);
+      t_last_button = t_now_button;
+      screen_page = screen_page_read(screen_page);
+      LCD(capa_voltage, capa_charge_current, charge_time, capa_discharge_current, discharge_time, batt_current, batt_voltage, batt_percent, batt_charge_status, capa_status, screen_page, laser_voltage, laser_current, discharge_lock_enable);
+    }
+  }
+    
+  while ((discharge == false && CV_begin == true) || (discharge == false && capa_voltage >= 3.85)) {
+      
+    CV_begin = true;
+    capa_voltage = voltage_sensor_capa_read(voltage_sensor_capa_pin);
+    capa_charge_current =  current_sensor_capa_charge_read(current_sensor_capa_charge_pin);
+      
+    if (capa_charge_current >= 100){
+      digitalWrite(relay_pin_CC, LOW);
+      digitalWrite(relay_pin_CV, HIGH);
+      digitalWrite(relay_pin_discharge, LOW);
+      
+      t_now_charge = millis();
+      charge_time_CV = charge_time_CV + (t_now_charge - t_last_charge_CV)/1000.0;
+      charge_time = charge_time_CC + charge_time_CV;
+      t_last_charge_CV = t_now_charge;
+
+      batt_current = current_sensor_batt_read(batt_current_sensor_pin);
+      batt_voltage = voltage_sensor_batt_read(batt_voltage_sensor_pin);
+      batt_percent = batt_percent_read(batt_voltage_sensor_pin);
+      batt_charge_status = batt_charge_status_read(batt_recharge_pin, batt_percent);
+      capa_status = capa_status_read(discharge, capa_charge_current);
+      laser_voltage = voltage_sensor_laser_read(voltage_sensor_laser_pin);
+      laser_current = current_sensor_laser_read(current_sensor_laser_pin);
+      t_now_button = millis();
+        
+      if (t_now_button - t_last_button > t_wait_button) {
+        discharge_lock_enable = discharge_lock_check(discharge_lock_enable);
+        t_last_button = t_now_button;
+        screen_page = screen_page_read(screen_page);
+        LCD(capa_voltage, capa_charge_current, charge_time, capa_discharge_current, discharge_time, batt_current, batt_voltage, batt_percent, batt_charge_status, capa_status, screen_page, laser_voltage, laser_current, discharge_lock_enable);
+      }
+    }
+      
+    else {
+      
+      charge_time = charge_time_CC + charge_time_CV;
+      digitalWrite(relay_pin_CC, LOW);
+      digitalWrite(relay_pin_CV, HIGH);
+      digitalWrite(relay_pin_discharge, LOW);
+
+      batt_current = current_sensor_batt_read(batt_current_sensor_pin);
+      batt_voltage = voltage_sensor_batt_read(batt_voltage_sensor_pin);
+      batt_percent = batt_percent_read(batt_voltage_sensor_pin);
+      batt_charge_status = batt_charge_status_read(batt_recharge_pin, batt_percent);
+      capa_status = capa_status_read(discharge, capa_charge_current);
+      laser_voltage = voltage_sensor_laser_read(voltage_sensor_laser_pin);
+      laser_current = current_sensor_laser_read(current_sensor_laser_pin);
+      t_now_button = millis();
+      
+      if (t_now_button - t_last_button > t_wait_button) {
+        discharge_lock_enable = discharge_lock_check(discharge_lock_enable);
+        t_last_button = t_now_button;
+        screen_page = screen_page_read(screen_page);
+        LCD(capa_voltage, capa_charge_current, charge_time, capa_discharge_current, discharge_time, batt_current, batt_voltage, batt_percent, batt_charge_status, capa_status, screen_page, laser_voltage, laser_current, discharge_lock_enable);
+      }
+      else if (digitalRead(discharge_enable_button_pin) == HIGH) {
+
+          if (discharge_lock_enable == false){
+            batt_current = current_sensor_batt_read(batt_current_sensor_pin);
+            discharge_time = 0;
+            t_last_discharge = millis();
+            CV_begin = false;
+            discharge = true;
+          }
+          else {
+            discharge = false;  
+          }
+        
+      } 
+    }
+  }
+
+  while (discharge == true){
+      
+    digitalWrite(relay_pin_CC, LOW);
+    digitalWrite(relay_pin_CV, LOW);
+    digitalWrite(relay_pin_discharge, HIGH);
+    
+    capa_voltage = voltage_sensor_capa_read(voltage_sensor_capa_pin);
+    capa_discharge_current = current_sensor_capa_discharge_read(current_sensor_capa_discharge_pin);
+    
+    t_now_discharge = millis();
+    discharge_time = discharge_time + (t_now_discharge - t_last_discharge)/1000.0;
+    t_last_discharge = t_now_discharge;
+      
+    batt_current = current_sensor_batt_read(batt_current_sensor_pin);
+    batt_voltage = voltage_sensor_batt_read(batt_voltage_sensor_pin);
+    batt_percent = batt_percent_read(batt_voltage_sensor_pin);
+    batt_charge_status = batt_charge_status_read(batt_recharge_pin, batt_percent);
+    capa_status = capa_status_read(discharge, capa_charge_current);
+    laser_voltage = voltage_sensor_laser_read(voltage_sensor_laser_pin);
+    laser_current = current_sensor_laser_read(current_sensor_laser_pin);
+    t_now_button = millis();
+      
+    if (t_now_button - t_last_button > t_wait_button) {
+      discharge_lock_enable = discharge_lock_check(discharge_lock_enable);
+      t_last_button = t_now_button;
+      screen_page = screen_page_read(screen_page);
+      LCD(capa_voltage, capa_charge_current, charge_time, capa_discharge_current, discharge_time, batt_current, batt_voltage, batt_percent, batt_charge_status, capa_status, screen_page, laser_voltage, laser_current, discharge_lock_enable);
+
+      if (capa_voltage < 3.3 || digitalRead(discharge_disable_button_pin) == HIGH ){
+        CV_begin = false;
+        batt_current = current_sensor_batt_read(batt_current_sensor_pin);
+        charge_time_CC = 0;
+        charge_time_CV = 0;
+        t_last_charge_CC = millis();
+        t_last_charge_CV = millis();
+        discharge = false;
+      }
+    }      
+  }
+}
