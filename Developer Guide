@@ -1,0 +1,35 @@
+Quick Start Developer’s Guide LLPS 
+
+The Light Weight Long Lasting Power Supply can power a 100-milliwatt laser via a maximum electrical power output of 500-milliwatts. The power supply can power the 100-milliwatt laser at an electrical efficiency greater than or equal to 30%. Furthermore, the power supply can power the 100-milliwatt laser for more than 120 seconds while having a downtime of 280 seconds when the supercapacitor bank is recharging. This is then all compressed into a system that weight less than 3 kilograms. 
+
+Operating Instructions 
+
+Ensure that the associated Arduino Code (which is in the GitHub repo labeled as “Final Arduino Code”) is uploaded to the Arduino Mega Microcontroller 
+
+Utilize either a wall outlet or a 12-32 V DC adapter to charge the battery within the power supply. 
+
+Monitor the Arduino LCD Screen for the battery percentage 
+
+Arduino LCD Screen Controls 
+
+Select Button 
+
+Locks/Unlocks the power supply’s ability to power the 100-milliwatt laser 
+
+Left Button/Right Button 
+
+Cycle display information between the battery, the supercapacitor bank, and the laser diode 
+
+Up/Down Buttons 
+
+Cycle specific display information regarding the component being viewed on the LCD screen such as voltage, current, power, battery percentage, capacitor charge status, and discharge time. 
+
+Once the Arduino LCD displays a battery percentage aligning with the user’s satisfaction, disconnect the power supply from the wall outlet or the 12-32 V DC adapter and ensure that the laser firing mechanism isn’t locked by checking the LCD screen for a lock symbol. After checking, press the left black button to the right of the Arduino Mega Controller to turn on the laser 
+
+The Arduino LCD Screen will begin to display the discharge time elapsed since the laser was turned on. However, the user can still cycle via the LCD shield buttons to see different measurements throughout the power supply 
+
+To adjust the brightness of the laser, turn the potentiometer knob located in the bottom right of the circuit clockwise to increase the intensity and counterclockwise to decrease the intensity. If the Arduino LCD is displaying the current going into the laser diode, a clockwise rotation should yield a stark increase in the current going into the laser diode 
+
+To Turn off the laser, press the black button to the right of the left black button as discussed in step 4. The discharge time on the Arduino LCD will reset as the power supply recharges its supercapacitor bank with the previously charged battery 
+
+Once the battery percentage on the Arduino LCD reads a percentage dissatisfactory to the user, plug the power supply into either a wall outlet or 12-32 V DC adapter to recharge the battery for follow-on operations 
